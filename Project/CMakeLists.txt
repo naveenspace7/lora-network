@@ -11,8 +11,8 @@ message("Built MySQL library dependencies ...")
 
 if($ENV{USER} STREQUAL "pi")
     message("Building wiring pi dependencies ...")
-    add_library(wpi SHARED ${PROJECT_SOURCE_DIR}/wiringpi/wpi.cpp)
-    target_link_libraries(wpi -lwiringPi)
+    #add_library(wpi SHARED ${PROJECT_SOURCE_DIR}/wiringpi/wpi.cpp)
+    #target_link_libraries(wpi -lwiringPi)
 endif()
 
 #add_executable(lora ${PROJECT_SOURCE_DIR}/database/lora_db.cpp)
