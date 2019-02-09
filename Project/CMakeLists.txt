@@ -14,8 +14,8 @@ message("Built packet library ...")
 
 if($ENV{USER} STREQUAL "pi")
     message("Building wiring pi dependencies ...")
-    #add_library(wpi SHARED ${CMAKE_CURRENT_SOURCE_DIR}/wiringpi/wpi.cpp)
-    #target_link_libraries(wpi -lwiringPi)
+    add_library(lora_support SHARED ${CMAKE_CURRENT_SOURCE_DIR}/lora_support/lora_support.cpp)
+    target_link_libraries(lora_support -lwiringPi)
 endif()
 
 #add_executable(lora ${CMAKE_CURRENT_SOURCE_DIR}/database/lora_db.cpp)
