@@ -21,10 +21,10 @@ if($ENV{USER} STREQUAL "pi")
     target_link_libraries(lora_support -lwiringPi)
 
     add_executable(lora ${CMAKE_CURRENT_SOURCE_DIR}/gateway/app.cpp)
-    target_link_libraries(lora -lpacket -llora_db -llora_support -lwiringPi -lmysqlcppconn)
+    target_link_libraries(lora packet lora_db lora_support wiringPi -lmysqlcppconn)
 
-#else
+else()
 
-    #message("Skipping final application")
+    message(ERROR ": Skipping complete build, try this on RPi")
 
 endif()
