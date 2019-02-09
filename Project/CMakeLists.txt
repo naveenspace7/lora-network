@@ -9,6 +9,9 @@ add_library(lora_db SHARED ${CMAKE_CURRENT_SOURCE_DIR}/database/lora_db.cpp)
 target_link_libraries(lora_db -lmysqlcppconn)
 message("Built MySQL library dependencies ...")
 
+add_library(packet SHARED ${CMAKE_CURRENT_SOURCE_DIR}/packet/packet.cpp)
+message("Built packet library ...")
+
 if($ENV{USER} STREQUAL "pi")
     message("Building wiring pi dependencies ...")
     #add_library(wpi SHARED ${CMAKE_CURRENT_SOURCE_DIR}/wiringpi/wpi.cpp)
