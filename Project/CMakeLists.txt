@@ -14,6 +14,9 @@ message("Processing MySQL library dependencies ...")
 add_library(packet SHARED ${CMAKE_CURRENT_SOURCE_DIR}/packet/packet.cpp)
 message("Processing packet library ...")
 
+add_library(logger SHARED ${CMAKE_CURRENT_SOURCE_DIR}/logger/logger.cpp)
+message("Processing logger library ...")
+
 if($ENV{USER} STREQUAL "pi")
 
     message("Processing LoRa support ...")
@@ -21,7 +24,7 @@ if($ENV{USER} STREQUAL "pi")
     target_link_libraries(lora_support -lwiringPi)
 
     add_executable(lora ${CMAKE_CURRENT_SOURCE_DIR}/gateway/app.cpp)
-    target_link_libraries(lora packet lora_db lora_support wiringPi -lmysqlcppconn)
+    target_link_libraries(lora packet lora_db logger lora_support wiringPi -lmysqlcppconn)
 
 else()
 
