@@ -123,13 +123,22 @@ def update_graph(select_date, select_location, select_sensor):
     title = "This is the title"
     return {
         'data': [{
-            'x': s1,#dff.Date,
-            'y': s2,#dff.Close,
+            'x': s1,
+            'y': s2,
             'line': {
                 'width': 3,
                 'shape': 'spline'
             }
-        }],
+        },
+        {
+            'x': p1,
+            'y': p2,
+            'line': {
+                'width': 3,
+                'shape': 'spline'
+            }
+        }
+        ],
         'layout': {
             'title': title,
             'margin': {
