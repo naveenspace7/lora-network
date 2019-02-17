@@ -119,6 +119,8 @@ def update_graph(select_date, select_location, select_sensor):
 
     # dff = df[df['Stock'] == selected_dropdown_value]
     # print dff.Date
+
+    title = "This is the title"
     return {
         'data': [{
             'x': s1,#dff.Date,
@@ -129,21 +131,16 @@ def update_graph(select_date, select_location, select_sensor):
             }
         }],
         'layout': {
+            'title': title,
             'margin': {
                 'l': 30,
                 'r': 20,
                 'b': 30,
                 't': 20
-            }
+            },
+            'xaxis': {'title': "Time"},
+            'yaxis': {'title': "Value"}
         },
-        xaxis=dict(
-        title='x Axis',
-        titlefont=dict(
-            family='Courier New, monospace',
-            size=18,
-            color='#7f7f7f'
-        )
-    ),
     }
 
 # @app.callback(Output('my-graph123', 'figure'),
