@@ -1,32 +1,64 @@
+#!/usr/bin/python
+
 import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
-
 import flask
 import pandas as pd
 import time
 import os
 
+import mysql.connector
+
+from lxml import etree
+
+def parseXML(xmlFile):
+    """
+    Parse the xml
+    """
+    user = ''; ip_addr = ''; pwd=''; db=''
+    with open(xmlFile) as fobj:
+        xml = fobj.read()
+
+    root = etree.fromstring(xml)
+
+    for appt in root.getchildren():
+        for elem in appt.getchildren():
+            if not elem.text:
+                text = "None"
+            else:
+                text = elem.text
+
+            if elem.tag == "ip_addr":
+                ip_addr = text
+            elif elem.tag == "user":
+                user = text
+            elif elem.tag == "pwd":
+                pwd = text
+            elif elem.tag == "db":
+                db = text
+
+            # print(elem.tag + " => " + text)
+
+    return user, ip_addr, pwd, db
+
+user, host, pwd, db = parseXML("credentials.xml")
+
 server = flask.Flask('app')
 server.secret_key = os.environ.get('secret_key', 'secret')
-
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/hello-world-stock.csv')
-
 app = dash.Dash('app', server=server)
-
 app.scripts.config.serve_locally = False
-# dcc._js_dist[0]['external_url'] = 'https://cdn.plot.ly/plotly-basic-latest.min.js'
 
-s1 = ['1:0:0','2:0:9','3:1:2','4:2:3']
+print "Connecting to database " + db + " at " + host + " with credentials " + user + " " + pwd
+mydb = mysql.connector.connect(host=host, user=user, passwd=pwd, database=db)
+mycursor = mydb.cursor()
+
+s1 = ['1:0:0','2:0:9','3:1:2','4:2:3','1:1:1']
 s2 = [1,2,3,4]
 
 p1 = ['1:0:0','2:0:9','3:1:2','4:2:3']
 p2 = [4,3,2,1]
-
-
-# drop down list-3: for sensor
-
 
 def get_dates_entries():
     dates_dropdown = []
@@ -80,12 +112,6 @@ date_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSL
 location_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_location_entries()
 sensor_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_sensor_entries()
 
-
-
-
-
-
-
 app.layout = html.Div([
     html.H1('Stock Tickers'),
     html.H2('Sensors'),
@@ -114,7 +140,7 @@ app.layout = html.Div([
                Input('sensor-dropdown', 'value')])
 
 def update_graph(select_date, select_location, select_sensor):
-    print "000:", select_date, select_location, select_sensor
+    print "Dropbox selection:", select_date, select_location, select_sensor
 
 
     # dff = df[df['Stock'] == selected_dropdown_value]
@@ -122,24 +148,17 @@ def update_graph(select_date, select_location, select_sensor):
 
     title = "This is the title"
     return {
-        'data': [{
-            'x': s1,
-            'y': s2,
-            'line': {
-                'width': 3,
-                'shape': 'spline'
-            }
+        'data': [
+        {
+            'x': s1, 'y': s2,
+            'line': {'width': 3, 'shape': 'spline'}
         },
         {
-            'x': p1,
-            'y': p2,
-            'line': {
-                'width': 3,
-                'shape': 'spline'
-            }
-        }
-        ],
-        'layout': {
+            'x': p1, 'y': p2,
+            'line': {'width': 3, 'shape': 'spline'}
+        }],
+        'layout': 
+        {
             'title': title,
             'margin': {
                 'l': 30,
@@ -152,31 +171,6 @@ def update_graph(select_date, select_location, select_sensor):
         },
     }
 
-# @app.callback(Output('my-graph123', 'figure'),
-#               [Input('my-dropdown123', 'value')])
-
-# def update_graph(selected_dropdown_value):
-#     print "123:",selected_dropdown_value
-#     dff = df[df['Stock'] == selected_dropdown_value]
-#     # print dff.Date
-#     return {
-#         'data': [{
-#             'x': p1,#dff.Date,
-#             'y': p2,#dff.Close,
-#             'line': {
-#                 'width': 3,
-#                 'shape': 'spline'
-#             }
-#         }],
-#         'layout': {
-#             'margin': {
-#                 'l': 30,
-#                 'r': 20,
-#                 'b': 10,
-#                 't': 20
-#             }
-#         }
-#     }
 
 if __name__ == '__main__':
     app.run_server()
