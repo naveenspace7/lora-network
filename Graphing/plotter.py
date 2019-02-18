@@ -64,12 +64,12 @@ def get_dates_entries():
     dates_dropdown = []
     query = 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE "m%y%";'
 
-    # mycursor.execute(query)
-    # results = mycursor.fetchall()
-    results = []
+    mycursor.execute(query)
+    results = mycursor.fetchall()
 
     for each in results:
         # each = "m02y19"
+        each = str(each[0]) # Hack: this returned a tuple, so did this processing
         disp_str = each[1:3] + ' / 20' + each[4:6]
         temp_dict = {}
         temp_dict['label'] = disp_str
@@ -78,43 +78,40 @@ def get_dates_entries():
     return dates_dropdown
 
 def get_location_entries(date_str = None):
-    dates_dropdown = []
+    location_dropdown = []
     if date_str != None: return
-    query = 'SELECT DISTINCT location_id FROM ' + date_str + ';'
-    # mycursor.execute(query)
-    # results = mycursor.fetchall()
-    results = []
+    date_str = "m02y2019"
+    query = "select distinct location_name, location.location_id from location inner join " + date_str + " on location.location_id = m02y2019.location_id;"
+    mycursor.execute(query)
+    results = mycursor.fetchall()
     for each in results:
-        # disp_str = each[1:3] + ' / 20' + each[4:6] # TODO: get the location names from location IDs
         temp_dict = {}
-        temp_dict['label'] = each
-        temp_dict['value'] = each
-        dates_dropdown.append(temp_dict)
-    return dates_dropdown
+        temp_dict['label'] = str(each[0])
+        temp_dict['value'] = str(each[1])
+        location_dropdown.append(temp_dict)
+    return location_dropdown
 
 def get_sensor_entries(date_str = None):
-    dates_dropdown = []
+    sensor_dropdown = []
     if date_str != None: return
-    query = 'SELECT DISTINCT sensor_id FROM ' + date_str + ';'
-    # mycursor.execute(query)
-    # results = mycursor.fetchall()
-    results = []
+    date_str = "m02y2019"
+    query = "select distinct sensor_name, sensor.sensor_id from sensor inner join " + date_str + " on sensor.sensor_id = m02y2019.sensor_id;"
+    mycursor.execute(query)
+    results = mycursor.fetchall()
     for each in results:
-        # disp_str = each[1:3] + ' / 20' + each[4:6] # TODO: get the sensor names from sensor IDs
         temp_dict = {}
-        temp_dict['label'] = each
-        temp_dict['value'] = each
-        dates_dropdown.append(temp_dict)
-    return dates_dropdown
+        temp_dict['label'] = str(each[0])
+        temp_dict['value'] = str(each[1])
+        sensor_dropdown.append(temp_dict)
+    return sensor_dropdown
 
-"SELECT DISTINCT sensor_id FROM table"
-date_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
-location_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_location_entries()
-sensor_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_sensor_entries()
+# date_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
+date_dict = get_dates_entries()
+location_dict = get_location_entries()
+sensor_dict = get_sensor_entries()
 
 app.layout = html.Div([
-    html.H1('Stock Tickers'),
-    html.H2('Sensors'),
+    html.H1('Sensors'),
     # dcc.Dropdown(id='date-dropdown',  options=[{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}],value='None'),
     
     # drop down list-1: for date
@@ -141,22 +138,33 @@ app.layout = html.Div([
 
 def update_graph(select_date, select_location, select_sensor):
     print "Dropbox selection:", select_date, select_location, select_sensor
+    x_axis = []
+    y_axis = []
+    if select_date and select_location and select_sensor:
+        query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = 18;" % (select_date, select_location, select_sensor)
+        # print query
+        mycursor.execute(query)
+        results = mycursor.fetchall()
+        for each in results:
+            x_axis.append(str(each[1]))
+            y_axis.append(each[4])
 
+    # print x_axis
+    # print y_axis
 
-    # dff = df[df['Stock'] == selected_dropdown_value]
-    # print dff.Date
 
     title = "This is the title"
     return {
         'data': [
         {
-            'x': s1, 'y': s2,
+            'x': x_axis, 'y': y_axis,
             'line': {'width': 3, 'shape': 'spline'}
-        },
-        {
-            'x': p1, 'y': p2,
-            'line': {'width': 3, 'shape': 'spline'}
-        }],
+        }
+        # ,{
+        #     'x': p1, 'y': p2,
+        #     'line': {'width': 3, 'shape': 'spline'}
+        # }
+        ],
         'layout': 
         {
             'title': title,
