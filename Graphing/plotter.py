@@ -124,6 +124,8 @@ app.layout = html.Div([
     dcc.Dropdown(id='sensor-dropdown',  options=sensor_dict),
     
     dcc.Graph(id='sensor-readout'),
+
+    dcc.Interval(id='interval-update', interval=1000, n_intervals=0)
     
     # dcc.Dropdown(id='location-dropdown',  options=[{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}],value='None'),
     # dcc.Graph(id='my-graph123')
@@ -134,14 +136,18 @@ app.layout = html.Div([
 @app.callback(Output('sensor-readout', 'figure'),
               [Input('date-dropdown', 'value'), 
                Input('location-dropdown', 'value'), 
-               Input('sensor-dropdown', 'value')])
+               Input('sensor-dropdown', 'value'),
+               Input('interval-update', 'n_intervals')])
 
-def update_graph(select_date, select_location, select_sensor):
+def update_graph(select_date, select_location, select_sensor, n):
+    print "n:..",n
     print "Dropbox selection:", select_date, select_location, select_sensor
     x_axis = []
     y_axis = []
     if select_date and select_location and select_sensor:
-        query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = 18;" % (select_date, select_location, select_sensor)
+        mycursor = mydb.cursor()
+        #TODO: in the below line make the date a variable
+        query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = 19;" % (select_date, select_location, select_sensor)
         # print query
         mycursor.execute(query)
         results = mycursor.fetchall()
@@ -151,7 +157,6 @@ def update_graph(select_date, select_location, select_sensor):
 
     # print x_axis
     # print y_axis
-
 
     title = "This is the title"
     return {
