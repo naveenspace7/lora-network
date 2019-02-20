@@ -151,6 +151,7 @@ def update_graph(select_date, select_location, select_sensor, n):
         # print query
         mycursor.execute(query)
         results = mycursor.fetchall()
+        mydb.commit()
         for each in results:
             x_axis.append(str(each[1]))
             y_axis.append(each[4])
