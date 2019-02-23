@@ -70,7 +70,7 @@ def get_dates_entries():
     for each in results:
         # each = "m02y19"
         each = str(each[0]) # Hack: this returned a tuple, so did this processing
-        disp_str = each[1:3] + ' / 20' + each[4:6]
+        disp_str = each[1:3] + ' / 19' + each[4:6]
         temp_dict = {}
         temp_dict['label'] = disp_str
         temp_dict['value'] = each
@@ -135,8 +135,6 @@ app.layout = html.Div([
     # dcc.Graph(id='my-graph123')
 ], className="container")
 
-
-
 @app.callback(Output('sensor-readout', 'figure'),
               [Input('date-dropdown', 'value'), 
                Input('type-selection', 'value'),
@@ -147,11 +145,21 @@ def update_graph(select_date, select_type, select_location, select_sensor):
     print "Dropbox selection:", select_date, select_location, select_sensor, select_type
     x_axis = []
     y_axis = []
+    ITEMS = 5
     if select_date and select_location and select_sensor:
-        mycursor = mydb.cursor()
+        query = None
         #TODO: in the below line make the date a variable
-        query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = 19;" % (select_date, select_location, select_sensor)
-        # print query
+        if select_type == "date":
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %d;" % (select_date, select_location, select_sensor, select_date[-2:])
+        else:
+            # obtain the number of rows first
+            mycursor.execute("SELECT count(*) FROM %s" % (select_date))
+            COUNT = mycursor.fetchall()
+            COUNT = 5
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %d " % (select_date, select_location, select_sensor, select_date[-2:])
+            query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
+
+        print query
         mycursor.execute(query)
         results = mycursor.fetchall()
         mydb.commit()
