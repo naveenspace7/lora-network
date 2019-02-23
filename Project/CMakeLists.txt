@@ -14,7 +14,7 @@ message("Processing MySQL library dependencies ...")
 add_library(packet SHARED ${CMAKE_CURRENT_SOURCE_DIR}/packet/packet.cpp)
 message("Processing packet library ...")
 
-add_library(logger SHARED ${CMAKE_CURRENT_SOURCE_DIR}/logger/logger.cpp)
+add_library(logger SHARED ${CMAKE_CURRENT_SOURCE_DIR}/utility/logger.cpp)
 message("Processing logger library ...")
 
 if($ENV{USER} STREQUAL "pi")
