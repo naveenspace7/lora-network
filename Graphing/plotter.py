@@ -106,6 +106,8 @@ def get_sensor_entries(date_str = None):
     return sensor_dropdown
 
 # date_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
+# location_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
+# sensor_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
 date_dict = get_dates_entries()
 location_dict = get_location_entries()
 sensor_dict = get_sensor_entries()
@@ -114,6 +116,8 @@ app.layout = html.Div([
     html.H1('Sensors'),
     # dcc.Dropdown(id='date-dropdown',  options=[{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}],value='None'),
     
+    dcc.RadioItems(id='type-selection', options=[{'label':'Date', 'value':'date'}, {'label':'Real-time', 'value':'realtime'}], value='realtime',labelStyle={'display':'inline-block'}),
+
     # drop down list-1: for date
     dcc.Dropdown(id='date-dropdown',  options=date_dict),
 
@@ -135,13 +139,12 @@ app.layout = html.Div([
 
 @app.callback(Output('sensor-readout', 'figure'),
               [Input('date-dropdown', 'value'), 
+               Input('type-selection', 'value'),
                Input('location-dropdown', 'value'), 
-               Input('sensor-dropdown', 'value'),
-               Input('interval-update', 'n_intervals')])
+               Input('sensor-dropdown', 'value')])
 
-def update_graph(select_date, select_location, select_sensor, n):
-    print "n:..",n
-    print "Dropbox selection:", select_date, select_location, select_sensor
+def update_graph(select_date, select_type, select_location, select_sensor):
+    print "Dropbox selection:", select_date, select_location, select_sensor, select_type
     x_axis = []
     y_axis = []
     if select_date and select_location and select_sensor:
