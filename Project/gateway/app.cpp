@@ -64,9 +64,6 @@ int avail() {
   return (register_read(REG_RX_NB_BYTES) - _packetIndex);
 }
 
-
-
-
 uint8_t readData() {
   if (!avail()) return -1;
 
@@ -77,6 +74,8 @@ uint8_t readData() {
 
 // receiving with polling method
 void receiver(sql_cls& sql_handler) {
+
+  mysql_autocommit(MYSQL *mysql, my_bool mode)
   while(1)
   {
     int packetSize = parsePacket();
@@ -102,27 +101,23 @@ void receiver(sql_cls& sql_handler) {
       vector<int> temp = get_timestamp();
       
       cout << temp[0] << " : " << temp[1] << " . " << temp[2] << " { " << my_packet.m_lid << ' ' << my_packet.m_sid << ' ' << my_packet.m_int_value << " }" << endl;
+
+      // TODO: check if the table exists
       
       // cout << "packet:" << my_packet.m_lid << ' ' << my_packet.m_sid << ' ' << my_packet.m_int_value << " @ " << temp[0] << ':' << temp[1] << '.' << temp[2] << endl;
 
       // // stmt->execute("INSERT INTO books(title, price) VALUES ('wtf is this',43)");
-      // stringstream query;
-      // query << "INSERT INTO m122018(date, time, lid, sid, val) "; 
-      // query << "VALUES( 3, '" << temp[1] << ':' << temp[2] << "' , " << my_packet.m_lid << ", " << my_packet.m_sid << ", " << my_packet.m_int_value << ')';
-      // sql_handler.update_table(query.str());
-      // cout << query.str() << endl;
+      stringstream query;
+      query << "INSERT INTO m02y2019(date, time, location_id, sensor_id, value) "; 
+      query << "VALUES( " << temp[3] << ", '" << temp[1] << ':' << temp[2] << "' , " << my_packet.m_lid << ", " << my_packet.m_sid << ", " << my_packet.m_int_value << ')';
+      sql_handler.update_table(query.str());
+      cout << query.str() << endl;
       delete[] data;
     }
   }
 }
 
-// void get_timestamp()
-// {
-//   vector<int> temp(3);
-//   // temp[]
-//   time_t now = time(0);
-//   struct tm *mytime = localtime(&now);
-// }
+// CREATE table m02y2019(date INT, time VARCHAR(10), location_id INT, sensor_id INT, value INT)
 
 // ISR for data received
 void received_data()
@@ -132,22 +127,18 @@ void received_data()
 
 vector<int> get_timestamp()
 {
-  vector<int> temp(3);
-  // temp[]
+  vector<int> temp(4);
   time_t now = time(0);
   struct tm *mytime = localtime(&now);
-  // cout << mytime->tm_sec << ' ' << mytime->tm_min << ' ' << endl;
   temp[0] = (int) mytime->tm_hour;
   temp[1] = (int) mytime->tm_min;
   temp[2] = (int) mytime->tm_sec;
+  temp[3] = (int) mytime->tm_mday;
   return temp;
 }
 
 int main()
 {
-  // get_timestamp();
-  // cout << "hello world" << endl;
-
   sql_cls mysql("localhost", "root", "samaritan3");
 
   Init_gpio_spi();
