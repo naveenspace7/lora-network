@@ -1,25 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <sstream>
-
-using namespace std;
-
-class logger
-{
-private:
-    streambuf *coutbuf;
-    ofstream out;
-public:
-    logger(string out_name = "");
-    void exit_logger();
-};
-
-void logger::exit_logger()
-{
-    cout.rdbuf(coutbuf);
-}
+#include "logger.hpp"
 
 // reuse this function
 vector<int> get_timestamp()
@@ -31,6 +10,11 @@ vector<int> get_timestamp()
   temp[1] = mytime->tm_min;
   temp[2] = mytime->tm_sec;
   return temp;
+}
+
+void logger::exit_logger()
+{
+    cout.rdbuf(coutbuf);
 }
 
 logger::logger(string out_name)
