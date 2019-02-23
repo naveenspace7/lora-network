@@ -31,5 +31,9 @@
 *.out
 *.app
 
+# Credentials
+credentials.xml
+
 # Directories
 build/
+.vscode/
