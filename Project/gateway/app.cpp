@@ -4,13 +4,15 @@
 #include <bitset>
 #include <iostream>
 #include <stdint.h>
-#include "lora.hpp"
-#include "lora_support.hpp"
-#include "packet.hpp"
 #include <ctime>
 #include <sstream>
 #include <vector>
+
+#include "lora.hpp"
+#include "lora_support.hpp"
+#include "packet.hpp"
 #include "lora_db.hpp"
+#include "logger.hpp"
 /* TODO:
  * group all the fifo reads into one single transfer (hint: make use of heap to store data there)
  */ 
@@ -136,6 +138,8 @@ vector<int> get_timestamp()
 
 int main()
 {
+  logger log;
+
   get_timestamp();
 
   cout << "hello world" << endl;
@@ -147,5 +151,6 @@ int main()
 
   receiver(mysql);
 
+  log.exit_logger();
   return 0;
 }
