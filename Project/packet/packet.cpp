@@ -1,5 +1,5 @@
 #include "packet.hpp"
-
+#include <stdio.h>
 packet_data::packet_data(uint8_t* rxd)
 {
     // m_date      = *rxd++;
@@ -21,7 +21,8 @@ packet_data::packet_data(uint8_t* rxd)
     }
     else
     {
-        m_int_value = (int)*rxd;
-        // TODO increase the data size;
+        m_int_value = 0;
+        for (int i = m_length-1; i >= 0; i--)
+            m_int_value |= (*rxd++) << i*8;
     }
 }

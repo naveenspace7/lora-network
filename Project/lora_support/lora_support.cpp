@@ -31,7 +31,7 @@ int initialize(long frequency) {
 
   register_write(REG_DIO_MAPPING_1, 0x00);
   // register_write(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_SINGLE);
-  cout << "OP_MODE_REG: " << hex << (int) register_read(REG_OP_MODE) << endl;
+  // cout << "OP_MODE_REG: " << hex << (int) register_read(REG_OP_MODE) << endl;
   return 1;
 }
 

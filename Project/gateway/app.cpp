@@ -48,7 +48,7 @@ int parsePacket() {
 
     // put in standby mode
     lora_stby_mode();
-    cout << "parsing received packet of size : " << packetLength << endl;
+    // cout << "parsing received packet of size : " << packetLength << endl;
   } 
   else if (register_read(REG_OP_MODE) != (MODE_LONG_RANGE_MODE | MODE_RX_SINGLE)) {
     // not currently in RX mode
@@ -86,24 +86,33 @@ void receiver(sql_cls& sql_handler) {
     {
       int i = 0;
       uint8_t *data = new uint8_t(packetSize);
-      cout << "Received packet: ";
+      cout << "Received packet " << packetSize << " ";
       while(avail())
       {
+        if (i > packetSize)
+        {
+          // log message and break
+          cout << "Length is exceeding, skipping assignment." << endl;
+          break;
+        }
         data[i] = (uint8_t) readData();
         i++;
         // cout << (int) readData() << ' ';
       }
       // for (int j = 0; j < packetSize; j++) cout << hex << (int) data[j] << ' ';
       packet_data my_packet(data);
-      cout << "packet:" << my_packet.m_lid << ' ' << my_packet.m_sid << ' ' << my_packet.m_int_value << ' ';
-
-      // stmt->execute("INSERT INTO books(title, price) VALUES ('wtf is this',43)");
       vector<int> temp = get_timestamp();
-      stringstream query;
-      query << "INSERT INTO m122018(date, time, lid, sid, val) "; 
-      query << "VALUES( 3, '" << temp[1] << ':' << temp[2] << "' , " << my_packet.m_lid << ", " << my_packet.m_sid << ", " << my_packet.m_int_value << ')';
-      sql_handler.update_table(query.str());
-      cout << query.str() << endl;
+      
+      cout << temp[0] << " : " << temp[1] << " . " << temp[2] << " { " << my_packet.m_lid << ' ' << my_packet.m_sid << ' ' << my_packet.m_int_value << " }" << endl;
+      
+      // cout << "packet:" << my_packet.m_lid << ' ' << my_packet.m_sid << ' ' << my_packet.m_int_value << " @ " << temp[0] << ':' << temp[1] << '.' << temp[2] << endl;
+
+      // // stmt->execute("INSERT INTO books(title, price) VALUES ('wtf is this',43)");
+      // stringstream query;
+      // query << "INSERT INTO m122018(date, time, lid, sid, val) "; 
+      // query << "VALUES( 3, '" << temp[1] << ':' << temp[2] << "' , " << my_packet.m_lid << ", " << my_packet.m_sid << ", " << my_packet.m_int_value << ')';
+      // sql_handler.update_table(query.str());
+      // cout << query.str() << endl;
       delete[] data;
     }
   }
@@ -129,10 +138,10 @@ vector<int> get_timestamp()
   // temp[]
   time_t now = time(0);
   struct tm *mytime = localtime(&now);
-  cout << mytime->tm_sec << ' ' << mytime->tm_min << ' ' << endl;
-  temp[0] = mytime->tm_hour;
-  temp[1] = mytime->tm_min;
-  temp[2] = mytime->tm_sec;
+  // cout << mytime->tm_sec << ' ' << mytime->tm_min << ' ' << endl;
+  temp[0] = (int) mytime->tm_hour;
+  temp[1] = (int) mytime->tm_min;
+  temp[2] = (int) mytime->tm_sec;
   return temp;
 }
 
@@ -142,7 +151,6 @@ int main()
 
   get_timestamp();
 
-  cout << "hello world" << endl;
   sql_cls mysql("localhost", "root", "samaritan3");
 
   Init_gpio_spi();
