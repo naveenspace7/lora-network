@@ -75,7 +75,6 @@ uint8_t readData() {
 // receiving with polling method
 void receiver(sql_cls& sql_handler) {
 
-  mysql_autocommit(MYSQL *mysql, my_bool mode)
   while(1)
   {
     int packetSize = parsePacket();
