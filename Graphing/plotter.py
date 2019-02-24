@@ -155,11 +155,11 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
             query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, 24) #TODO: read this from elsewhere
         else:
             # obtain the number of rows first
-            query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, now)
+            query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s;" % (select_date, select_location, select_sensor)
             mycursor.execute(query)
             COUNT = mycursor.fetchall()[0][0]
             print "COUNT:",COUNT
-            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s " % (select_date, select_location, select_sensor, now)
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s " % (select_date, select_location, select_sensor)
             query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
 
         print "query is:",query
