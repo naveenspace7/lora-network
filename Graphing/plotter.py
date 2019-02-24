@@ -7,7 +7,7 @@ import dash_html_components as html
 import flask
 import pandas as pd
 import time
-import os
+import os, datetime
 
 import mysql.connector
 
@@ -70,7 +70,7 @@ def get_dates_entries():
     for each in results:
         # each = "m02y19"
         each = str(each[0]) # Hack: this returned a tuple, so did this processing
-        disp_str = each[1:3] + ' / 20' + each[4:6]
+        disp_str = each[1:3] + ' / 19' + each[4:6]
         temp_dict = {}
         temp_dict['label'] = disp_str
         temp_dict['value'] = each
@@ -106,6 +106,8 @@ def get_sensor_entries(date_str = None):
     return sensor_dropdown
 
 # date_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
+# location_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
+# sensor_dict = [{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}]#get_dates_entries()
 date_dict = get_dates_entries()
 location_dict = get_location_entries()
 sensor_dict = get_sensor_entries()
@@ -114,8 +116,11 @@ app.layout = html.Div([
     html.H1('Sensors'),
     # dcc.Dropdown(id='date-dropdown',  options=[{'label': 'None', 'value': 'None'},{'label': 'Tesla', 'value': 'TSLA'},{'label': 'Apple', 'value': 'AAPL'},{'label': 'Coke', 'value': 'COKE'}],value='None'),
     
+    dcc.RadioItems(id='type-selection', options=[{'label':'Date', 'value':'date'}, {'label':'Real-time', 'value':'realtime'}], value='realtime',labelStyle={'display':'inline-block'}),
+
     # drop down list-1: for date
     dcc.Dropdown(id='date-dropdown',  options=date_dict),
+    html.Div('br'),
 
     # drop down list-2: for location
     dcc.Dropdown(id='location-dropdown',  options=location_dict),
@@ -131,24 +136,33 @@ app.layout = html.Div([
     # dcc.Graph(id='my-graph123')
 ], className="container")
 
-
-
 @app.callback(Output('sensor-readout', 'figure'),
               [Input('date-dropdown', 'value'), 
+               Input('type-selection', 'value'),
                Input('location-dropdown', 'value'), 
                Input('sensor-dropdown', 'value'),
                Input('interval-update', 'n_intervals')])
-
-def update_graph(select_date, select_location, select_sensor, n):
-    print "n:..",n
-    print "Dropbox selection:", select_date, select_location, select_sensor
+def update_graph(select_date, select_type, select_location, select_sensor, n):
+    print "Dropbox selection:", select_date, select_location, select_sensor, select_type, n
     x_axis = []
     y_axis = []
+    ITEMS = 20
+    now = datetime.datetime.now().day
     if select_date and select_location and select_sensor:
-        mycursor = mydb.cursor()
+        query = None
         #TODO: in the below line make the date a variable
-        query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = 19;" % (select_date, select_location, select_sensor)
-        # print query
+        if select_type == "date":
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, 24) #TODO: read this from elsewhere
+        else:
+            # obtain the number of rows first
+            query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, now)
+            mycursor.execute(query)
+            COUNT = mycursor.fetchall()[0][0]
+            print "COUNT:",COUNT
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s " % (select_date, select_location, select_sensor, now)
+            query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
+
+        print "query is:",query
         mycursor.execute(query)
         results = mycursor.fetchall()
         mydb.commit()
