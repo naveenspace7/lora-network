@@ -4,7 +4,7 @@ project(lora)
 message($ENV{USER})
 message(${CMAKE_CURRENT_SOURCE_DIR})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/database/ ${CMAKE_CURRENT_SOURCE_DIR}/lora_support/ ${CMAKE_CURRENT_SOURCE_DIR}/packet/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/database/ ${CMAKE_CURRENT_SOURCE_DIR}/lora_support/ ${CMAKE_CURRENT_SOURCE_DIR}/packet/ ${CMAKE_CURRENT_SOURCE_DIR}/utility/)
 
 # libraries
 add_library(lora_db SHARED ${CMAKE_CURRENT_SOURCE_DIR}/database/lora_db.cpp)
@@ -14,7 +14,7 @@ message("Processing MySQL library dependencies ...")
 add_library(packet SHARED ${CMAKE_CURRENT_SOURCE_DIR}/packet/packet.cpp)
 message("Processing packet library ...")
 
-add_library(logger SHARED ${CMAKE_CURRENT_SOURCE_DIR}/logger/logger.cpp)
+add_library(logger SHARED ${CMAKE_CURRENT_SOURCE_DIR}/utility/logger.cpp)
 message("Processing logger library ...")
 
 if($ENV{USER} STREQUAL "pi")
