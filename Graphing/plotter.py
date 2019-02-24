@@ -7,7 +7,7 @@ import dash_html_components as html
 import flask
 import pandas as pd
 import time
-import os
+import os, datetime
 
 import mysql.connector
 
@@ -120,6 +120,7 @@ app.layout = html.Div([
 
     # drop down list-1: for date
     dcc.Dropdown(id='date-dropdown',  options=date_dict),
+    html.Div('br'),
 
     # drop down list-2: for location
     dcc.Dropdown(id='location-dropdown',  options=location_dict),
@@ -139,27 +140,29 @@ app.layout = html.Div([
               [Input('date-dropdown', 'value'), 
                Input('type-selection', 'value'),
                Input('location-dropdown', 'value'), 
-               Input('sensor-dropdown', 'value')])
-
-def update_graph(select_date, select_type, select_location, select_sensor):
-    print "Dropbox selection:", select_date, select_location, select_sensor, select_type
+               Input('sensor-dropdown', 'value'),
+               Input('interval-update', 'n_intervals')])
+def update_graph(select_date, select_type, select_location, select_sensor, n):
+    print "Dropbox selection:", select_date, select_location, select_sensor, select_type, n
     x_axis = []
     y_axis = []
-    ITEMS = 5
+    ITEMS = 20
+    now = datetime.datetime.now().day
     if select_date and select_location and select_sensor:
         query = None
         #TODO: in the below line make the date a variable
         if select_type == "date":
-            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %d;" % (select_date, select_location, select_sensor, select_date[-2:])
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, 24) #TODO: read this from elsewhere
         else:
             # obtain the number of rows first
-            mycursor.execute("SELECT count(*) FROM %s" % (select_date))
-            COUNT = mycursor.fetchall()
-            COUNT = 5
-            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %d " % (select_date, select_location, select_sensor, select_date[-2:])
+            query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, now)
+            mycursor.execute(query)
+            COUNT = mycursor.fetchall()[0][0]
+            print "COUNT:",COUNT
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s " % (select_date, select_location, select_sensor, now)
             query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
 
-        print query
+        print "query is:",query
         mycursor.execute(query)
         results = mycursor.fetchall()
         mydb.commit()
