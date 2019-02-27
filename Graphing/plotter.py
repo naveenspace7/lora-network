@@ -146,6 +146,7 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     print "Dropbox selection:", select_date, select_location, select_sensor, select_type, n
     x_axis = []
     y_axis = []
+    y_units = None; x_units = "Time"
     ITEMS = 20
     now = datetime.datetime.now().day
     if select_date and select_location and select_sensor:
@@ -170,6 +171,10 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
             x_axis.append(str(each[1]))
             y_axis.append(each[4])
 
+        units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
+        mycursor.execute(units_query)
+        y_units = mycursor.fetchall()[0][0]
+        
     # print x_axis
     # print y_axis
 
@@ -194,8 +199,8 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
                 'b': 30,
                 't': 20
             },
-            'xaxis': {'title': "Time"},
-            'yaxis': {'title': "Value"}
+            'xaxis': {'title': x_units},
+            'yaxis': {'title': y_units}
         },
     }
 
