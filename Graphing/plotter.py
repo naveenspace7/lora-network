@@ -80,8 +80,8 @@ def get_dates_entries():
 def get_location_entries(date_str = None):
     location_dropdown = []
     if date_str != None: return
-    date_str = "m02y2019"
-    query = "select distinct location_name, location.location_id from location inner join " + date_str + " on location.location_id = m02y2019.location_id;"
+    date_str = "m03y2019"
+    query = "select distinct location_name, location.location_id from location inner join " + date_str + " on location.location_id = m03y2019.location_id;"
     mycursor.execute(query)
     results = mycursor.fetchall()
     for each in results:
@@ -94,8 +94,8 @@ def get_location_entries(date_str = None):
 def get_sensor_entries(date_str = None):
     sensor_dropdown = []
     if date_str != None: return
-    date_str = "m02y2019"
-    query = "select distinct sensor_name, sensor.sensor_id from sensor inner join " + date_str + " on sensor.sensor_id = m02y2019.sensor_id;"
+    date_str = "m03y2019"
+    query = "select distinct sensor_name, sensor.sensor_id from sensor inner join " + date_str + " on sensor.sensor_id = m03y2019.sensor_id;"
     mycursor.execute(query)
     results = mycursor.fetchall()
     for each in results:
@@ -153,7 +153,7 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
         query = None
         #TODO: in the below line make the date a variable
         if select_type == "date":
-            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, 24) #TODO: read this from elsewhere
+            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, 1) #TODO: read this from elsewhere
         else:
             # obtain the number of rows first
             query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s;" % (select_date, select_location, select_sensor)
@@ -161,15 +161,18 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
             COUNT = mycursor.fetchall()[0][0]
             print "COUNT:",COUNT
             query = "SELECT * FROM %s where location_id = %s and sensor_id = %s " % (select_date, select_location, select_sensor)
-            query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
+            if COUNT < ITEMS: query += "LIMIT %d offset %d;"%(ITEMS, COUNT)
+            else: query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
+            
 
         print "query is:",query
         mycursor.execute(query)
         results = mycursor.fetchall()
+        # print "results:",results
         mydb.commit()
         for each in results:
-            x_axis.append(str(each[1]))
-            y_axis.append(each[4])
+            x_axis.append(str(each[3])+":"+str(each[4]))
+            y_axis.append(each[-1])
 
         units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
         mycursor.execute(units_query)
