@@ -54,8 +54,8 @@ print "Connecting to database " + db + " at " + host + " with credentials " + us
 mydb = mysql.connector.connect(host=host, user=user, passwd=pwd, database=db)
 mycursor = mydb.cursor()
 
-s1 = ['1:0:0','2:0:9','3:1:2','4:2:3','1:1:1']
-s2 = [1,2,3,4]
+s1 = ['1:0:0','3:0:9','3:1:2','4:2:3','1:1:1']
+s2 = [1,2,3,4,5]
 
 p1 = ['1:0:0','2:0:9','3:1:2','4:2:3']
 p2 = [4,3,2,1]
@@ -80,8 +80,8 @@ def get_dates_entries():
 def get_location_entries(date_str = None):
     location_dropdown = []
     if date_str != None: return
-    date_str = "m02y2019"
-    query = "select distinct location_name, location.location_id from location inner join " + date_str + " on location.location_id = m02y2019.location_id;"
+    date_str = "m03y2019"
+    query = "select distinct location_name, location.location_id from location inner join " + date_str + " on location.location_id = m03y2019.location_id;"
     mycursor.execute(query)
     results = mycursor.fetchall()
     for each in results:
@@ -94,8 +94,8 @@ def get_location_entries(date_str = None):
 def get_sensor_entries(date_str = None):
     sensor_dropdown = []
     if date_str != None: return
-    date_str = "m02y2019"
-    query = "select distinct sensor_name, sensor.sensor_id from sensor inner join " + date_str + " on sensor.sensor_id = m02y2019.sensor_id;"
+    date_str = "m03y2019"
+    query = "select distinct sensor_name, sensor.sensor_id from sensor inner join " + date_str + " on sensor.sensor_id = m03y2019.sensor_id;"
     mycursor.execute(query)
     results = mycursor.fetchall()
     for each in results:
@@ -135,6 +135,10 @@ app.layout = html.Div([
     
 ], className="container")
 
+# TODO: add the room name here and also the title of the graph
+def obtain(x,y):
+    return {'x': x, 'y': y,'line': {'width': 3, 'shape': 'spline'}, 'name':'hello'}
+
 @app.callback(Output('sensor-readout', 'figure'),
               [Input('date-dropdown', 'value'), 
                Input('type-selection', 'value'),
@@ -149,46 +153,61 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     ITEMS = 20
     now = datetime.datetime.now().day
     if select_date and select_location and select_sensor:
-        query = None
-        #TODO: in the below line make the date a variable
-        if select_type == "date":
-            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, select_location, select_sensor, 24) #TODO: read this from elsewhere
-        else:
-            # obtain the number of rows first
-            query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s;" % (select_date, select_location, select_sensor)
+        for each_location in select_location:
+            query = None
+            #TODO: in the below line make the date a variable
+            if select_type == "date":
+                query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, each_location, select_sensor, 24) #TODO: read this from elsewhere
+            else:
+                # obtain the number of rows first
+                query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s;" % (select_date, each_location, select_sensor)
+                # print "sub-query is:",query
+                mycursor.execute(query)
+                COUNT = mycursor.fetchall()[0][0]
+                print "COUNT:",COUNT
+                query = "SELECT * FROM %s where location_id = %s and sensor_id = %s " % (select_date, each_location, select_sensor)
+                if COUNT < ITEMS: query += "LIMIT %d offset %d;"%(ITEMS, COUNT)
+                else: query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
+
+            print "query is:",query
             mycursor.execute(query)
-            COUNT = mycursor.fetchall()[0][0]
-            print "COUNT:",COUNT
-            query = "SELECT * FROM %s where location_id = %s and sensor_id = %s " % (select_date, select_location, select_sensor)
-            query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
+            results = mycursor.fetchall()
+            mydb.commit()
+            x_temp = []; y_temp = []
+            for each in results:
+                x_temp.append(str(each[3])+":"+str(each[4]))
+                y_temp.append(each[-1])
 
-        print "query is:",query
-        mycursor.execute(query)
-        results = mycursor.fetchall()
-        mydb.commit()
-        for each in results:
-            x_axis.append(str(each[1]))
-            y_axis.append(each[4])
+            units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
+            mycursor.execute(units_query)
+            y_units = mycursor.fetchall()[0][0]
 
-        units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
-        mycursor.execute(units_query)
-        y_units = mycursor.fetchall()[0][0]
+            x_axis.append(x_temp); y_axis.append(y_temp)
+
+
+    data = []
+
+    for s in range(0,len(x_axis)):
+        data.append(obtain(x_axis[s], y_axis[s]))
+
+
         
     # print x_axis
     # print y_axis
 
     title = "This is the title"
     return {
-        'data': [
-        {
-            'x': x_axis, 'y': y_axis,
-            'line': {'width': 3, 'shape': 'spline'}
-        }
-        ,{
-            'x': p1, 'y': p2,
-            'line': {'width': 3, 'shape': 'spline'}
-        }
-        ],
+        'data': data,
+        # [
+        # {
+        #     'x': s1, 'y': s2,
+        #     'line': {'width': 3, 'shape': 'spline'}
+        # }
+        # ,{
+        #     'x': p1, 'y': p2,
+        #     'line': {'width': 3, 'shape': 'spline'}
+        # }
+        # ],
         'layout': 
         {
             'title': title,
