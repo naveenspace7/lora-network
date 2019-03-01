@@ -83,7 +83,7 @@ void receiver(sql_cls& sql_handler) {
     if(packetSize)
     {
       int i = 0;
-      uint8_t *data = new uint8_t(packetSize);
+      uint8_t *data = new uint8_t[packetSize];
       cout << "Received packet " << packetSize << " ";
       while(avail())
       {
@@ -107,10 +107,10 @@ void receiver(sql_cls& sql_handler) {
       
       // cout << "packet:" << my_packet.m_lid << ' ' << my_packet.m_sid << ' ' << my_packet.m_int_value << " @ " << temp[0] << ':' << temp[1] << '.' << temp[2] << endl;
 
-      // // stmt->execute("INSERT INTO books(title, price) VALUES ('wtf is this',43)");
+      // // stmt->execute("INSERT INTO books(title, price) VALUES ('book is this',43)");
       stringstream query;
-      query << "INSERT INTO m02y2019(date, time, location_id, sensor_id, value) "; 
-      query << "VALUES( " << temp[3] << ", '" << temp[1] << ':' << temp[2] << "' , " << my_packet.m_lid << ", " << my_packet.m_sid << ", " << my_packet.m_int_value << ')';
+      query << "INSERT INTO m03y2019(date, location_id, sensor_id, hour, min, value) "; 
+      query << "VALUES(" << temp[3] << ", " << my_packet.m_lid << ", " << my_packet.m_sid <<  ", " << temp[0] << ", " << temp[1] << " , " << my_packet.m_int_value << ')';
       sql_handler.update_table(query.str());
       cout << query.str() << endl;
       delete[] data;
@@ -140,7 +140,7 @@ vector<int> get_timestamp()
 
 int main()
 {
-  logger log;
+  // logger log;
   
   sql_cls mysql("localhost", "root", "samaritan3");
 
@@ -150,6 +150,6 @@ int main()
 
   receiver(mysql);
 
-  log.exit_logger();
+  // log.exit_logger();
   return 0;
 }
