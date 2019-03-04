@@ -5,7 +5,7 @@
 uint8_t ss = 10, reset = 9, DPIN = 7; // this should be changed according to the board
 
 //#define TICK_INTERVAL 60000000 // this is 1 minute
-#define TICK_INTERVAL 10000000
+#define TICK_INTERVAL 5000000 // s5 secs
 
 // registers
 #define REG_FIFO                 0x00
@@ -63,12 +63,12 @@ uint8_t ss = 10, reset = 9, DPIN = 7; // this should be changed according to the
 
 dht sensor;
 
-uint8_t l_id = 5;
+uint8_t l_id = 43;
 
 uint32_t tick = 1;
 bool skip_frame = false;
 
-const int rate_temp_sensor = 5, rate_humid_sensor = 5, rate_mq135_sensor = 2; // 10 mins
+const int rate_temp_sensor = 12, rate_humid_sensor = 11, rate_mq135_sensor = 10;
 int sensorVal, digitalVal;
 const uint8_t temp_s_id = 12, hum_s_id = 13, mq135_s_id = 18;
 
@@ -92,12 +92,15 @@ void timer_tick() {
 
 void tx_mq135_data() {
   uint16_t mq135_value = 0;
-  uint16_t meas[5];
-  for(int i = 0; i < 5; i++) {
+  uint16_t meas[12];
+  uint16_t value = 0;
+  for(int i = 0; i < 12; i++) {
     meas[i] = analogRead(0);
-    qsort(meas, 5, sizeof(uint16_t), sort_desc);
+    value += meas[i];
   }
-  mq135_value = meas[2];
+  qsort(meas, 5, sizeof(uint16_t), sort_desc);
+  value = value - meas[0] - meas[11] - meas[1] - meas[10];
+  mq135_value = value/8;
   Serial.print("MQ-135:");
   uint8_t packet[] = {l_id, mq135_s_id, sizeof(mq135_value), (uint8_t)((mq135_value & 0xff00) >> 8), (uint8_t)(mq135_value & 0xff)};
   Serial.println(mq135_value);
@@ -107,14 +110,18 @@ void tx_mq135_data() {
 }
 
 void tx_temp_data() {
+//  static uint8_t interna/l_tick = 0;
   uint8_t temperature_value = 0;
-  uint8_t meas[5];
-  for(int i = 0; i < 5; i++)   {
+  uint8_t meas[12];
+  uint16_t value = 0;
+  for(int i = 0; i < 12; i++)   {
     int chk = sensor.read11(DPIN);
     meas[i] = (byte) sensor.temperature;
-    qsort(meas, 5, sizeof(byte), sort_desc);
+    value += meas[i];
   }
-  temperature_value = meas[2];
+  qsort(meas, 5, sizeof(byte), sort_desc);
+  value = value - meas[0] - meas[11] - meas[1] - meas[10];
+  temperature_value = value/8;
   Serial.print("Temperature:");
   uint8_t packet[] = {l_id, temp_s_id, sizeof(temperature_value), temperature_value};
   Serial.println(temperature_value);
@@ -125,13 +132,16 @@ void tx_temp_data() {
 
 void tx_hmd_data() {
   uint8_t humidity_value = 0;
-  uint8_t meas[5];
-  for(int i = 0; i < 5; i++)   {
+  uint8_t meas[12];
+  uint16_t value = 0;
+  for(int i = 0; i < 12; i++)   {
     int chk = sensor.read11(DPIN);
     meas[i] = (byte) sensor.humidity;
-    qsort(meas, 5, sizeof(byte), sort_desc);
+    value += meas[i];
   }
-  humidity_value = meas[2];
+  qsort(meas, 5, sizeof(byte), sort_desc);
+  value = value - meas[0] - meas[11] - meas[1] - meas[10];
+  humidity_value = value/8;
   Serial.print("Humidity:");
   uint8_t packet[] = {l_id, hum_s_id, sizeof(humidity_value), humidity_value};
   Serial.println(humidity_value);
