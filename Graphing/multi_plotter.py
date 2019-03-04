@@ -162,6 +162,8 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     y_units = None; x_units = "Time"
     ITEMS = 20
     now = datetime.datetime.now().day
+    only_mins = []
+    mins_fill = False
     if select_date and select_location and select_sensor:
         for each_location in select_location:
             print "inloop"
@@ -191,6 +193,8 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
                 x_temp.append(str(each[3])+":"+str(each[4]))
                 y_temp.append(each[-1])
                 # values_dict[str(each[3])+":"+str(each[4])] = each[-1]
+            
+            mins_fill = True
 
             units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
             mycursor.execute(units_query)
@@ -202,7 +206,7 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     data = []
 
     for s in range(0,len(x_axis)):
-        data.append(obtain(select_location[s], x_axis[s], y_axis[s]))
+        data.append(obtain(select_location[s], x_axis[0], y_axis[s]))
 
 
         
