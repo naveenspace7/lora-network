@@ -60,20 +60,26 @@ s2 = [1,2,3,4,5]
 p1 = ['1:0:0','2:0:9','3:1:2','4:2:3']
 p2 = [4,3,2,1]
 
+location_mapping = {}
+
 def get_dates_entries():
     dates_dropdown = []
-    query = 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE "m%y%";'
+    # query = 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE "m%y%";'
+
+    query = "select distinct date from m03y2019;"
+    # print "qw:",query
 
     mycursor.execute(query)
     results = mycursor.fetchall()
+    # print "res:",results
 
     for each in results:
         # each = "m02y19"
         each = str(each[0]) # Hack: this returned a tuple, so did this processing
-        disp_str = each[1:3] + ' / 19' + each[4:6]
+        disp_str = each
         temp_dict = {}
         temp_dict['label'] = disp_str
-        temp_dict['value'] = each
+        temp_dict['value'] = "m03y2019"
         dates_dropdown.append(temp_dict)
     return dates_dropdown
 
@@ -89,6 +95,9 @@ def get_location_entries(date_str = None):
         temp_dict['label'] = str(each[0])
         temp_dict['value'] = str(each[1])
         location_dropdown.append(temp_dict)
+        # location_mapping.append(temp_dict)
+        location_mapping[each[1]] = str(each[0])
+    # print location_mapping
     return location_dropdown
 
 def get_sensor_entries(date_str = None):
@@ -131,13 +140,14 @@ app.layout = html.Div([
     
     dcc.Graph(id='sensor-readout'),
 
-    dcc.Interval(id='interval-update', interval=1000, n_intervals=0)
+    dcc.Interval(id='interval-update', interval=5000, n_intervals=5)
     
 ], className="container")
 
 # TODO: add the room name here and also the title of the graph
-def obtain(x,y):
-    return {'x': x, 'y': y,'line': {'width': 3, 'shape': 'spline'}, 'name':'hello'}
+def obtain(locations,x,y):
+    # print "in obtain:", location_mapping[int(locations)]
+    return {'x': x[:-1], 'y': y[:-1],'line': {'width': 3, 'shape': 'spline'}, 'name':location_mapping[int(locations)]}
 
 @app.callback(Output('sensor-readout', 'figure'),
               [Input('date-dropdown', 'value'), 
@@ -154,29 +164,33 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     now = datetime.datetime.now().day
     if select_date and select_location and select_sensor:
         for each_location in select_location:
+            print "inloop"
             query = None
             #TODO: in the below line make the date a variable
             if select_type == "date":
-                query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, each_location, select_sensor, 24) #TODO: read this from elsewhere
+                query = "SELECT * FROM %s where location_id = %s and sensor_id = %s and date = %s;" % (select_date, each_location, select_sensor, 4) #TODO: read this from elsewhere
             else:
                 # obtain the number of rows first
                 query = "SELECT count(*) FROM %s where location_id = %s and sensor_id = %s;" % (select_date, each_location, select_sensor)
                 # print "sub-query is:",query
                 mycursor.execute(query)
-                COUNT = mycursor.fetchall()[0][0]
-                print "COUNT:",COUNT
+                COUNT = int(mycursor.fetchall()[0][0])
+                # print "COUNT:",COUNT
                 query = "SELECT * FROM %s where location_id = %s and sensor_id = %s " % (select_date, each_location, select_sensor)
-                if COUNT < ITEMS: query += "LIMIT %d offset %d;"%(ITEMS, COUNT)
+                if COUNT < ITEMS: query += "LIMIT %d offset %d;"%(ITEMS, 0)
                 else: query += "LIMIT %d offset %d;"%(ITEMS, COUNT - ITEMS)
 
             print "query is:",query
             mycursor.execute(query)
             results = mycursor.fetchall()
+            print "results:",results
             mydb.commit()
             x_temp = []; y_temp = []
+            values_dict = {}
             for each in results:
                 x_temp.append(str(each[3])+":"+str(each[4]))
                 y_temp.append(each[-1])
+                # values_dict[str(each[3])+":"+str(each[4])] = each[-1]
 
             units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
             mycursor.execute(units_query)
@@ -188,7 +202,7 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     data = []
 
     for s in range(0,len(x_axis)):
-        data.append(obtain(x_axis[s], y_axis[s]))
+        data.append(obtain(select_location[s], x_axis[s], y_axis[s]))
 
 
         
