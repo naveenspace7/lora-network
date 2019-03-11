@@ -54,12 +54,6 @@ print "Connecting to database " + db + " at " + host + " with credentials " + us
 mydb = mysql.connector.connect(host=host, user=user, passwd=pwd, database=db)
 mycursor = mydb.cursor()
 
-s1 = ['1:0:0','3:0:9','3:1:2','4:2:3','1:1:1']
-s2 = [1,2,3,4,5]
-
-p1 = ['1:0:0','2:0:9','3:1:2','4:2:3']
-p2 = [4,3,2,1]
-
 location_mapping = {}
 
 def get_dates_entries():
@@ -78,7 +72,7 @@ def get_dates_entries():
         each = str(each[0]) # Hack: this returned a tuple, so did this processing
         disp_str = each
         temp_dict = {}
-        temp_dict['label'] = disp_str
+        temp_dict['label'] = disp_str + " - 03 - 2019"
         temp_dict['value'] = "m03y2019"
         dates_dropdown.append(temp_dict)
     return dates_dropdown
@@ -194,7 +188,7 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
                 y_temp.append(each[-1])
                 # values_dict[str(each[3])+":"+str(each[4])] = each[-1]
             
-            mins_fill = True
+            # mins_fill = True
 
             units_query = "SELECT sensor_units FROM sensor WHERE sensor_id = %s;" % (select_sensor)
             mycursor.execute(units_query)
@@ -206,7 +200,7 @@ def update_graph(select_date, select_type, select_location, select_sensor, n):
     data = []
 
     for s in range(0,len(x_axis)):
-        data.append(obtain(select_location[s], x_axis[0], y_axis[s]))
+        data.append(obtain(select_location[s], x_axis[s], y_axis[s]))
 
 
         
