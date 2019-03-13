@@ -1,0 +1,7 @@
+In Lab, temperature sensor is close to the window facing directly sunlight.
+Staff room has blinder installed and has frequent people moving.
+
+Lab very less people visiting, ~ less humidity
+Staff room more people keep visiting the place hence more humidity.
+
+
