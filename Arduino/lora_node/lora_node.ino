@@ -4,8 +4,8 @@
 
 uint8_t ss = 10, reset = 9, DPIN = 7; // this should be changed according to the board
 
-//#define TICK_INTERVAL 60000000 
-#define TICK_INTERVAL 1000000
+//#define TICK_INTERVAL 60000000 // this is 1 minute
+#define TICK_INTERVAL 5000000 // s5 secs
 
 // registers
 #define REG_FIFO                 0x00
@@ -63,58 +63,102 @@ uint8_t ss = 10, reset = 9, DPIN = 7; // this should be changed according to the
 
 dht sensor;
 
-uint8_t l_id = 5;
+uint8_t l_id = 43;
 
 uint32_t tick = 1;
 bool skip_frame = false;
 
-const int temp_sensor = 5, humid_sensor = 5; // 10 mins
+const int rate_temp_sensor = 12, rate_humid_sensor = 11, rate_mq135_sensor = 10;
+int sensorVal, digitalVal;
+const uint8_t temp_s_id = 12, hum_s_id = 13, mq135_s_id = 18;
+
+int sort_desc(const void *cmp1, const void *cmp2) {
+  // Need to cast the void * to int *
+  int a = *((int *)cmp1);
+  int b = *((int *)cmp2);
+  // The comparison
+  return a > b ? -1 : (a < b ? 1 : 0);
+  // A simpler, probably faster way:
+  //return b - a;
+}
 
 void timer_tick() {
   tick++;
-//  Serial.println("hw");
-  if ((tick % temp_sensor) == 0)  tx_temp_data();
-  if ((tick % humid_sensor) == 0) tx_hmd_data();
+  //  Serial.println("hw");
+  if ((tick % rate_temp_sensor) == 0) tx_temp_data();
+  if ((tick % rate_humid_sensor) == 0) tx_hmd_data();
+  if ((tick % rate_mq135_sensor) == 0) tx_mq135_data();
 }
 
-void tx_temp_data()
-{
-  Serial.print("temp:");
-  uint8_t s_id = 0x12, temp_val = 0;
-  int chk = sensor.read11(DPIN);
-  temp_val = (uint8_t) sensor.temperature;
-  uint8_t packet[] = {l_id, s_id, 0, temp_val};
-  Serial.println(temp_val);
+void tx_mq135_data() {
+  uint16_t mq135_value = 0;
+  uint16_t meas[12];
+  uint16_t value = 0;
+  for(int i = 0; i < 12; i++) {
+    meas[i] = analogRead(0);
+    value += meas[i];
+  }
+  qsort(meas, 5, sizeof(uint16_t), sort_desc);
+  value = value - meas[0] - meas[11] - meas[1] - meas[10];
+  mq135_value = value/8;
+  Serial.print("MQ-135:");
+  uint8_t packet[] = {l_id, mq135_s_id, sizeof(mq135_value), (uint8_t)((mq135_value & 0xff00) >> 8), (uint8_t)(mq135_value & 0xff)};
+  Serial.println(mq135_value);
+  TXbegin();
+  sendData(packet, 5);
+  transmitNow();
+}
+
+void tx_temp_data() {
+//  static uint8_t interna/l_tick = 0;
+  uint8_t temperature_value = 0;
+  uint8_t meas[12];
+  uint16_t value = 0;
+  for(int i = 0; i < 12; i++)   {
+    int chk = sensor.read11(DPIN);
+    meas[i] = (byte) sensor.temperature;
+    value += meas[i];
+  }
+  qsort(meas, 5, sizeof(byte), sort_desc);
+  value = value - meas[0] - meas[11] - meas[1] - meas[10];
+  temperature_value = value/8;
+  Serial.print("Temperature:");
+  uint8_t packet[] = {l_id, temp_s_id, sizeof(temperature_value), temperature_value};
+  Serial.println(temperature_value);
   TXbegin();
   sendData(packet, 4);
   transmitNow();
 }
 
-void tx_hmd_data()
-{
-  Serial.print("hmd:");
-  uint8_t s_id = 0x13, temp_val = 0;
-  int chk = sensor.read11(DPIN);
-  temp_val = (uint8_t) sensor.humidity;
-  uint8_t packet[] = {l_id, s_id, 0, temp_val};
-  Serial.println(temp_val);
+void tx_hmd_data() {
+  uint8_t humidity_value = 0;
+  uint8_t meas[12];
+  uint16_t value = 0;
+  for(int i = 0; i < 12; i++)   {
+    int chk = sensor.read11(DPIN);
+    meas[i] = (byte) sensor.humidity;
+    value += meas[i];
+  }
+  qsort(meas, 5, sizeof(byte), sort_desc);
+  value = value - meas[0] - meas[11] - meas[1] - meas[10];
+  humidity_value = value/8;
+  Serial.print("Humidity:");
+  uint8_t packet[] = {l_id, hum_s_id, sizeof(humidity_value), humidity_value};
+  Serial.println(humidity_value);
   TXbegin();
   sendData(packet, 4);
   transmitNow();
 }
 
-uint8_t readRegister(uint8_t addr)
-{
+uint8_t readRegister(uint8_t addr) {
   return singleTransfer(addr & 0x7f, 0);
 }
 
-void writeRegister(uint8_t addr, uint8_t val)
-{
+void writeRegister(uint8_t addr, uint8_t val) {
   singleTransfer(addr | 0x80, val);
 }
 
-uint8_t singleTransfer(uint8_t addr, uint8_t val)
-{
+uint8_t singleTransfer(uint8_t addr, uint8_t val) {
   uint8_t resp;
   
   digitalWrite(ss, LOW);
@@ -127,22 +171,19 @@ uint8_t singleTransfer(uint8_t addr, uint8_t val)
   return resp;
 }
 
-void enter_sleep()
-{
+void enter_sleep() {
   Serial.print("Entering sleep mode... ");
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP);
   Serial.println(readRegister(REG_OP_MODE), BIN);
 }
 
-void enter_idle()
-{
+void enter_idle() {
   Serial.print("Entering standby mode... ");
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
   Serial.println(readRegister(REG_OP_MODE), BIN);
 }
 
-void frequency_config(long frequency)
-{
+void frequency_config(long frequency) {
 
   //_frequency = frequency;
 
@@ -153,8 +194,7 @@ void frequency_config(long frequency)
   writeRegister(REG_FRF_LSB, (uint8_t)(frf >> 0));  
 }
 
-void setOCP(uint8_t mA)
-{
+void setOCP(uint8_t mA) {
   uint8_t ocpTrim = 27;
 
   if (mA <= 120) {
@@ -166,8 +206,7 @@ void setOCP(uint8_t mA)
   writeRegister(REG_OCP, 0x20 | (0x1F & ocpTrim));
 }
 
-void setTxPower(int level)
-{
+void setTxPower(int level) {
     // PA BOOST
     if (level > 17) {
       if (level > 20) {
@@ -191,8 +230,7 @@ void setTxPower(int level)
     writeRegister(REG_PA_CONFIG, PA_BOOST | (level - 2));
 }
 
-int initialize(long frequency)
-{
+int initialize(long frequency) {
   pinMode(ss, OUTPUT);
   digitalWrite(ss, HIGH);
     pinMode(reset, OUTPUT);
@@ -225,8 +263,7 @@ int initialize(long frequency)
   return 1;
 }
 
-bool txInProgress()
-{
+bool txInProgress() {
   if ((readRegister(REG_OP_MODE) & MODE_TX) == MODE_TX) {
     return true;
   }
@@ -239,8 +276,7 @@ bool txInProgress()
   return false;
 }
 
-int TXbegin()
-{
+int TXbegin() {
   if (txInProgress()) return 0;
 
   enter_idle();
@@ -255,15 +291,13 @@ int TXbegin()
   return 1;
 }
 
-void sendData(uint8_t* txData, byte size)
-{
+void sendData(uint8_t* txData, byte size) {
   if (size > 255) size = 255;
   for(int i = 0; i < size; i++) writeRegister(REG_FIFO, txData[i]);
   writeRegister(REG_PAYLOAD_LENGTH, size);
 }
 
-int transmitNow()
-{
+int transmitNow() {
   writeRegister(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_TX);
   Serial.print("TXing now ");
   Serial.print(readRegister(REG_OP_MODE), BIN);
@@ -289,9 +323,15 @@ void setup() {
 
 void loop() {
 
-//  if ((tick % temp_sensor) == 0)
-//  {tx_temp_data();}
-//  if ((tick % humid_sensor) == 0)
-//  {tx_hmd_data();skip_frame = true;}
-//  if (skip_frame) {tick++; skip_frame = false;}
+  // uint8_t packet[] = {1, 4, 3, 7};
+  // TXbegin();
+  // sendData(packet, 4);
+  // transmitNow();
+  // delay(60000);
+
+  //  if ((tick % temp_sensor) == 0)
+  //  {tx_temp_data();}
+  //  if ((tick % humid_sensor) == 0)
+  //  {tx_hmd_data();skip_frame = true;}
+  //  if (skip_frame) {tick++; skip_frame = false;}
 }
